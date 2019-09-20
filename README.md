@@ -23,3 +23,61 @@ __Steps__ :
 - Step 4 : Create a playbook for the K8s node
 - Step 5 : Add a test for the K8s node playbook
 - Step 6 : Instantiate the K8s cluster
+
+### Step 0 : Vagrantfile
+
+With Vagrant, we ca create a virtual environment easily. This way we can test our Ansible playbook that we are going to build.
+
+The following Vagrantfile is used to launch 3 Virtual machines :
+
+- k8s-master : the Kubernetes master
+- n workers : Kubernetes worker nodes
+
+By default, 2 workder nodes are created. If you wish to have more nodes, you can set the variable envrionment as followed :
+
+```sh
+export N_NODES=3
+```
+
+`N_NODES` will be used in the Vagrantfile accordingly to launch workers VMs.
+
+```vagrantfile
+IMAGE_NAME = 'centos/7'
+N = 2
+
+Vagrant.configure("2") do |config|
+    config.ssh.insert_key = false
+
+    config.vm.box = IMAGE_NAME
+    config.vm.provider "virtualbox" do |v|
+        v.memory = 1024
+        v.cpus = 2
+    end
+      
+    config.vm.define "k8s-master" do |master|
+        master.vm.box = IMAGE_NAME
+        master.vm.network "private_network", ip: "192.168.50.10"
+        master.vm.hostname = "k8s-master"
+        master.vm.provision "ansible" do |ansible|
+            ansible.playbook = "kubernetes-setup/master-playbook.yml"
+            ansible.extra_vars = {
+                node_ip: "192.168.100.10",
+            }
+        end
+    end
+
+    (1..N).each do |i|
+        config.vm.define "node-#{i}" do |node|
+            node.vm.box = IMAGE_NAME
+            node.vm.network "private_network", ip: "192.168.50.#{i + 10}"
+            node.vm.hostname = "node-#{i}"
+            node.vm.provision "ansible" do |ansible|
+                ansible.playbook = "kubernetes-setup/node-playbook.yml"
+                ansible.extra_vars = {
+                    node_ip: "192.168.100.#{i + 10}",
+                }
+            end
+        end
+    end
+end
+```
