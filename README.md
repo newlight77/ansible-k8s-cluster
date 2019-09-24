@@ -1,8 +1,10 @@
 # Multi-nodes Kubernetes cluster
 
-This blog post will walk you through the steps to setup a multi node Kubernetes cluster for development purposes. Even though Minikube is an excellent option for getting started on a local machine, it's not as close as a Multi node clusters could be to a production environment. A Multi-nodes Kubernetes cluster offer a production-like environment and gives the opportunity to work with realistic issues we could encounter when delivering softwares. 
+Kubernetes is an orchestration engine for docker containers in a cluster configuration. It is also known as `k8s` and it is open source and was developed initially by Google and then donated to “Cloud Native Computing foundation”. In Kubernetes setup we have one master node and multiple nodes. A cluster node is known as worker node or Minion. From the master node, we manage the cluster and its nodes using `kubeadm` and `kubect` command.
 
-We will setup a Kubernetes cluster that will consist of one master and two worker nodes. All the nodes will run Centos7 64-bit and Ansible playbooks will be used for provisioning.
+In this article, we will walk through steps to setup a multi node Kubernetes cluster for development purposes. Even though Minikube is an excellent option for getting started on a local machine, it's not as close as a multi-nodes cluster could be to a production environment. A multi-nodes Kubernetes cluster offer a production-like environment and gives the opportunity to work with realistic issues we could encounter when delivering softwares.
+
+We will install a Kubernetes cluster on CentOS 7 / RHEL 7 with kubeadm utility. The cluster will consist of one master and two worker nodes. Ansible playbooks will be used for provisioning.
 
 ## Prerequisites
 
@@ -10,21 +12,93 @@ We will setup a Kubernetes cluster that will consist of one master and two worke
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 - 3+ Machines running CentOS
 
+## What will be installed ?
+
+### Master
+
+On the Master Node following components will be installed :
+
+- API Server :
+
+provides kubernetes API using Json / Yaml over http
+
+- Scheduler :
+
+performs the scheduling tasks like launching containers in worker nodes based on resource availability
+
+- Controller Manager :
+
+monitors replication controllers and create pods to maintain desired state.
+
+- etcd :
+
+stores configuration data of cluster and cluster state.
+
+- Kubectl utility :
+
+It is used by administrators to create pods, services... it connects to API Server on port 6443
+
+### Worker
+
+On Worker Nodes following components will be installed :
+
+- Kubelet :
+
+It is an agent which runs on every worker node, it connects to docker and takes care of creating, starting, deleting containers.
+
+- Kube-Proxy :
+
+It routes the traffic to appropriate containers based on ip address and port number of the incoming request.
+
+- Pod :
+
+Pod can be defined as a multi-tier or group of containers that are deployed on a single worker node or docker host.
+
 ## Step-by-step
 
 We will go through many steps to setup the cluster, and while doing so we are automating everything as much as possible, and we also need to add testing ability.
 
-__Steps__ :
+**Step 1** : Bootstrap Ansible.
 
-- Step 0 : Using Vagrant for testing
-- Step 1 : Bootstraping an Ansible project
-- Step 2 : Create a playbook to setup a K8s master
-- Step 3 : Add a test for the K8s master playbook
-- Step 4 : Create a playbook for the K8s node
-- Step 5 : Add a test for the K8s node playbook
-- Step 6 : Instantiate the K8s cluster
+**Step 2** : Create a role for Kubelet installation.
 
-### Step 0 : Vagrantfile
+**Step 2.1** : Install Docker and its dependent components.
+
+**Step 2.2** : Kubelet will not start if the system has swap enabled, so we are disabling swap using the below code.
+
+**Step 2.3** : Installing kubelet, kubeadm and kubectl using the below code.
+
+### master
+
+**Step 3** : Create a role for k8s master.
+
+**Step 3.1** : Create a playbook
+
+**Step 3.2** : install Kubelet
+
+**Step 3.3** : Initialize the Kubernetes cluster with kubeadm using the below code
+
+**Step 3.4** : Setup the kube config file for the vagrant user to access the Kubernetes cluster using the below code.
+
+**Step 3.5** : Setup the container networking provider and the network policy engine using the below code.
+
+**Step 3.6** : Generate kube join command for joining the node to the Kubernetes cluster and store the command in the file named join-command.
+
+**Step 3.7** : Setup a handler for checking Docker daemon using the below code.
+
+### nodes
+
+**Step 4** : Create a role for k8s node.
+
+**Step 4.1** : Create a playbook
+
+**Step 4.2** : install Kubelet
+
+**Step 4.3**: Join the nodes to the Kubernetes cluster using below code.
+
+**Step 4.4** : Setup a handler for checking Docker daemon using the below code.
+
+## Testing
 
 With Vagrant, we ca create a virtual environment easily. This way we can test our Ansible playbook that we are going to build.
 
@@ -37,47 +111,26 @@ By default, 2 workder nodes are created. If you wish to have more nodes, you can
 
 ```sh
 export N_NODES=3
+
+vagrant up
 ```
 
 `N_NODES` will be used in the Vagrantfile accordingly to launch workers VMs.
 
-```vagrantfile
-IMAGE_NAME = 'centos/7'
-N = 2
+Upon completion of all the above steps, the Kubernetes cluster should be up and running. We can login to the master or worker nodes as follows:
 
-Vagrant.configure("2") do |config|
-    config.ssh.insert_key = false
+```sh
+$ ## Accessing master
+$ vagrant ssh k8s-master
+vagrant@k8s-master:~$ kubectl get nodes
+NAME         STATUS   ROLES    AGE     VERSION
+k8s-master   Ready    master   18m     v1.13.3
+node-1       Ready    <none>   12m     v1.13.3
+node-2       Ready    <none>   6m22s   v1.13.3
+```
 
-    config.vm.box = IMAGE_NAME
-    config.vm.provider "virtualbox" do |v|
-        v.memory = 1024
-        v.cpus = 2
-    end
-      
-    config.vm.define "k8s-master" do |master|
-        master.vm.box = IMAGE_NAME
-        master.vm.network "private_network", ip: "192.168.50.10"
-        master.vm.hostname = "k8s-master"
-        master.vm.provision "ansible" do |ansible|
-            ansible.playbook = "kubernetes-setup/master-playbook.yml"
-            ansible.extra_vars = {
-                node_ip: "192.168.100.10",
-            }
-        end
-    end
-
-    (1..N).each do |i|
-        config.vm.define "node-#{i}" do |node|
-            node.vm.box = IMAGE_NAME
-            node.vm.network "private_network", ip: "192.168.50.#{i + 10}"
-            node.vm.hostname = "node-#{i}"
-            node.vm.provision "ansible" do |ansible|
-                ansible.playbook = "kubernetes-setup/node-playbook.yml"
-                ansible.extra_vars = {
-                    node_ip: "192.168.100.#{i + 10}",
-                }
-            end
-        end
-    end
-end
+```sh
+$ ## Accessing nodes
+$ vagrant ssh node-1
+$ vagrant ssh node-2
 ```
