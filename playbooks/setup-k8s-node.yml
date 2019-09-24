@@ -1,0 +1,7 @@
+---
+- hosts: k8s-node[0-9]
+
+  roles:
+    - role: docker
+    - role: k8s-kubeadm
+    - role: k8s-node
