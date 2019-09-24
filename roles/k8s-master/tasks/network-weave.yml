@@ -1,0 +1,8 @@
+---
+
+- name: Kubernetes version
+  command: kubectl version | base64 | tr -d '\n'
+  register: kubever
+
+- name: deploy the pod network so that containers of different host communicated each other.
+  local_action: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version={{kubever}}"

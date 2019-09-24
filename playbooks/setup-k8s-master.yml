@@ -1,6 +1,7 @@
 ---
-- hosts: all
+- hosts: k8s-master
 
   roles:
     - role: docker
     - role: k8s-kubeadm
+    - role: k8s-master

@@ -1,0 +1,18 @@
+---
+
+- name: Set hostname k8s-master
+  shell: hostnamectl set-hostname 'k8s-master'
+  become: yes
+
+- name: Initialize the Kubernetes cluster using kubeadm
+  command: kubeadm init --apiserver-advertise-address="192.168.100.10" --apiserver-cert-extra-sans="192.168.100.10"  --node-name k8s-master --pod-network-cidr=192.168.0.0/16
+
+- include: admin-user.yml
+
+# - include: network-calico.yml
+- include: weave-network.yml
+
+- include: join-command.yml
+
+- name: Checking nodes
+  shell: kubectl get nodes
