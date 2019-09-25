@@ -1,8 +1,6 @@
-[k8s-master]
-192.168.100.10	ansible_connection=remove
+[master]
+k8s-master   192.168.100.10    ansible_connection=remove
 
-[k8s-node1]
-192.168.100.11	ansible_connection=remove
-
-[k8s-node2]
-192.168.100.12	ansible_connection=remove
+[workers]
+k8s-node1    192.168.100.11    ansible_connection=remove
+k8s-node2    192.168.100.12    ansible_connection=remove

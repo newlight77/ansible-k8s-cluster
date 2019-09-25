@@ -2,7 +2,7 @@
 
 - name: Restart Docker
   service:
-    name: kubelet
+    name: docker
     daemon_reload: yes
     state: restarted
   become: yes

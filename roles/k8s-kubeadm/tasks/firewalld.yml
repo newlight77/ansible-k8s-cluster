@@ -1,0 +1,80 @@
+---
+
+# Strategy:
+# Use "dmz" zone and add http/https.
+# Make dmz the default policy.
+
+
+- name: Enable firewalld
+  service: 
+    name: firewalld 
+    state: started 
+    enabled: yes
+
+- name: enable firewalld
+  service: 
+    name: firewalld 
+    enabled: true
+    state: started
+
+- name: Set dmz as default policy
+  command: firewall-cmd --set-default-zone=dmz
+
+- name: Allow http/https
+  command: firewall-cmd --zone=dmz --permanent --add-service=http --add-service=https
+
+# - name: 4949 (munin-node) is open to monitor(s)
+#   when: install_muninnode|default(True)
+#   command: firewall-cmd --permanent --zone=dmz --add-rich-rule='rule family="ipv4" source address="{{ item }}/32" port port=4949 protocol="tcp" accept'
+#   with_items: "{{ muninnode_query_ips|default([]) }}"
+
+- name: setup firewall rules
+  shell: firewall-cmd --permanent --add-port={{item}}
+  with_items:
+    - 6443/tcp
+    - 2379-2380/tcp
+    - 10250/tcp
+    - 10251/tcp
+    - 10252/tcp
+    - 10255/tcp
+
+- name: Reload firewall rules
+  shell: firewall-cmd --reload
+
+- name: Bounce firewalld
+  service: 
+    name: firewalld 
+    state: restarted
+
+- name: configure traffic routing in iptables
+  template:
+    src: templates/k8s.conf.j2
+    dest: /etc/sysctl.d/k8s.conf
+    owner: root
+    group: root
+    mode: 0440
+    force: yes
+
+- name: Load br_netfilter module
+  shell: modprobe br_netfilter
+
+- name: Ensure iptables service is installed
+  package:
+    name: '{{ item }}'
+    state: present
+  become: yes
+  with_items:
+    - iptables-services
+
+# - name: enable iptables
+#   service: 
+#     name: iptables 
+#     enabled: true
+#     state: started
+#   become: yes
+
+- name: Bounce iptables
+  service: 
+    name: iptables 
+    enabled: true
+    state: restarted

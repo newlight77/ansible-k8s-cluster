@@ -1,7 +1,8 @@
 ---
 - hosts: k8s-node[0-9]
-
+  become: yes
+  become_user: root
+  
   roles:
-    - role: docker
     - role: k8s-kubeadm
     - role: k8s-node

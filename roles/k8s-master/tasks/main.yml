@@ -4,8 +4,41 @@
   shell: hostnamectl set-hostname 'k8s-master'
   become: yes
 
+- name: Ensure docker, kubeadm and kubectl packages are installed
+  package:
+    name: '{{ item }}'
+    state: present
+  become: yes
+  with_items:
+    # - docker
+    # - kubeadm
+    # - kubelet
+    - kubectl
+
+# - name: Restart docker
+#   service:
+#     name: docker
+#     enabled: yes
+#     daemon_reload: yes
+#     state: started
+#   become: yes
+
+# - name: Restart kubelet
+#   service:
+#     name: kubelet
+#     enabled: yes
+#     daemon_reload: yes
+#     state: started
+#   become: yes
+
 - name: Initialize the Kubernetes cluster using kubeadm
   command: kubeadm init --apiserver-advertise-address="192.168.100.10" --apiserver-cert-extra-sans="192.168.100.10"  --node-name k8s-master --pod-network-cidr=192.168.0.0/16
+  become: yes
+
+# - name: Configure node ip
+#   lineinfile:
+#     path: /etc/default/kubelet
+#     line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
 
 - include: admin-user.yml
 

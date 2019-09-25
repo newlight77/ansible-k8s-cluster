@@ -2,51 +2,17 @@
 
 - name: Disable SELinux
   shell: setenforce 0; sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
-  become: yes
 
-- name: setup firewall rules
-  shell: firewall-cmd --permanent --add-port={{item}}
-  become: yes
-  with_items:
-    - 6443/tcp
-    - 2379-2380/tcp
-    - 10250/tcp
-    - 10251/tcp
-    - 10252/tcp
-    - 10255/tcp
-
-- name: Reload firewall rules
-  shell: firewall-cmd --reload
-  become: yes
-
-# - name: Bounce firewalld
-#   service: 
-#     name: firewalld 
-#     state: restarted
-
-- name: Load br_netfilter module
-  shell: modprobe br_netfilter
-  become: yes
-
-- name: configure traffic routing in iptables
-  template:
-    src: templates/k8s.conf.j2
-    dest: /etc/sysctl.d/k8s.conf
-    owner: root
-    group: root
-    mode: 0440
-    force: yes
-  become: yes
+- include: firewalld.yml
 
 - name: configure kubernetes repositories
   template:
-    src: templates/kubernetes.j2
+    src: templates/kubernetes.repo.j2
     dest: /etc/yum.repos.d/kubernetes.repo
     owner: root
     group: root
     mode: 0440
     force: yes
-  become: yes
 
 - name: Ensure kubeadm packages are installed
   package:
@@ -57,22 +23,25 @@
     - docker
     - kubeadm
     - kubelet
-    - kubectl
 
-# - name: Configure node ip
-#   lineinfile:
-#     path: /etc/default/kubelet
-#     line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
-
-# - name: Restart kubelet
-#   command: /bin/true
-#   notify: Restart kubelet
-#   when: ansible_env.USER is defined
+- name: Restart docker
+  command: /bin/true
+  notify: Restart docker
 
 - name: Restart kubelet
-  service:
-    name: kubelet
-    enabled: yes
-    daemon_reload: yes
-    # state: restarted
-  become: yes
+  command: /bin/true
+  notify: Restart kubelet
+
+# - name: Start docker
+#   service:
+#     name: docker
+#     enabled: yes
+#     daemon_reload: yes
+#     state: started
+
+# - name: Restart kubelet
+#   service:
+#     name: kubelet
+#     enabled: yes
+#     daemon_reload: yes
+#     state: restarted
