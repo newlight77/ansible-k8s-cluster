@@ -20,12 +20,12 @@
     name: kubelet
     enabled: yes
     daemon_reload: yes
-    # state: restarted
+    state: started
   become: yes
 
 - name: Copy the join command to node server
   copy: 
-    src: join-command 
+    src: /tmp/join-command.sh-local
     dest: /tmp/join-command.sh mode=0777
 
 - name: Join the node to cluster

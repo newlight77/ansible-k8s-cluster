@@ -1,8 +1,21 @@
 ---
 
 - name: Kubernetes version
-  command: kubectl version | base64 | tr -d '\n'
+  shell: kubectl version | base64 | tr -d '\n'
   register: kubever
 
+- name: Retrieve weave network yaml
+  shell: curl --location https://cloud.weave.works/k8s/v1.10/net.yaml?k8s-version={{kubever.stdout}}
+  register: net_yaml
+
+- name: Write network yml to file
+  local_action: copy content="{{ net_yaml.stdout }}" dest="/tmp/network.yml-local"
+  become: no
+
+- name: Copy the network yml file to master server
+  copy: 
+    src: /tmp/network.yml-local
+    dest: /tmp/network.yml
+
 - name: deploy the pod network so that containers of different host communicated each other.
-  local_action: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version={{kubever}}"
+  command: kubectl apply -f /tmp/network.yml

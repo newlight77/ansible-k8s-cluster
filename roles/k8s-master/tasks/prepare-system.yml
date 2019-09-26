@@ -1,0 +1,17 @@
+---
+
+- name: Set hostname k8s-master
+  shell: hostnamectl set-hostname 'k8s-master'
+
+- name: Remove swapfile from /etc/fstab
+  mount:
+    name: "{{ item }}"
+    fstype: swap
+    state: absent
+  with_items:
+    - swap
+    - none
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
