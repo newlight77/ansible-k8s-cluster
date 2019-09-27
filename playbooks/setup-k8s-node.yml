@@ -1,5 +1,5 @@
 ---
-- hosts: k8s-node[0-9]
+- hosts: nodes
   become: yes
   become_user: root
   

@@ -20,6 +20,7 @@ Vagrant.configure("2") do |config|
         master.vm.hostname = "k8s-master"
         master.vm.provision "ansible" do |ansible|
             ansible.playbook = "playbooks/setup-k8s-master.yml"
+            ansible.inventory_path = "inventories"
             ansible.extra_vars = {
                 node_ip: "192.168.100.10",
             }
@@ -29,12 +30,13 @@ Vagrant.configure("2") do |config|
     (1..n_nodes).each do |i|
         config.vm.define "k8s-node-#{i}" do |node|
             node.vm.box = IMAGE_NAME
-            node.vm.network "private_network", ip: "192.168.100.#{i + 10}"
+            node.vm.network "private_network", ip: "192.168.100.#{i + 20}"
             node.vm.hostname = "k8s-node-#{i}"
             node.vm.provision "ansible" do |ansible|
                 ansible.playbook = "playbooks/setup-k8s-node.yml"
+                ansible.inventory_path = "inventories"
                 ansible.extra_vars = {
-                    node_ip: "192.168.100.#{i + 10}",
+                    node_ip: "192.168.100.#{i + 20}",
                 }
             end
         end
