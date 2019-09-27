@@ -3,9 +3,9 @@
 - include: prepare-system.yml
 - include: init-master.yml
 - include: admin-user.yml
+- include: network-weave.yml
 # - include: network-calico.yml
-# - include: network-weave.yml
-# - include: join-command.yml
+- include: join-command.yml
 
-# - name: Checking nodes
-#   shell: kubectl get nodes
+- name: Checking nodes
+  shell: kubectl get nodes
