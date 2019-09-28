@@ -36,6 +36,7 @@ Vagrant.configure("2") do |config|
                 ansible.playbook = "playbooks/setup-k8s-node.yml"
                 ansible.inventory_path = "inventories"
                 ansible.extra_vars = {
+                    node_id: "#{i}",
                     node_ip: "192.168.100.#{i + 20}",
                 }
             end
