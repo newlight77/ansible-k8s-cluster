@@ -1,32 +1,4 @@
 ---
 
-- name: Ensure docker and kubeadm packages are installed
-  package:
-    name: '{{ item }}'
-    state: present
-  become: yes
-  with_items:
-    - docker
-    - kubeadm
-    - kubelet
-
-# - name: Configure node ip
-#   lineinfile:
-#     path: /etc/default/kubelet
-#     line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
-
-- name: Restart kubelet
-  service:
-    name: kubelet
-    enabled: yes
-    daemon_reload: yes
-    state: started
-  become: yes
-
-- name: Copy the join command to node server
-  copy: 
-    src: /tmp/join-command.sh-local
-    dest: /tmp/join-command.sh mode=0777
-
-- name: Join the node to cluster
-  command: sh /tmp/join-command.sh
+- include: prepare-system.yml
+- include: init-node.yml

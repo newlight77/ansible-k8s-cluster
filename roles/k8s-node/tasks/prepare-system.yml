@@ -1,0 +1,16 @@
+---
+
+- name: Set hostname k8s-node-{{node_id}}
+  shell: hostnamectl set-hostname 'k8s-node-{{node_id}}'
+
+- name: make sure docker is running
+  service: 
+    name: docker 
+    enabled: yes
+    state: started
+
+- name: make sure kubelet is running
+  service: 
+    name: kubelet 
+    enabled: yes
+    state: started

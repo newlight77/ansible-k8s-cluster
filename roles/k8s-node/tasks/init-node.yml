@@ -1,0 +1,15 @@
+---
+
+- name: Copy the join command to node server
+  copy: 
+    src: /tmp/join-command.sh-local
+    dest: /tmp/join-command.sh 
+    mode: 0777
+
+- name: Join the node to cluster
+  command: sh /tmp/join-command.sh
+
+# - name: Configure node ip
+#   lineinfile:
+#     path: /etc/default/kubelet
+#     line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}

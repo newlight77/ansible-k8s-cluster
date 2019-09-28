@@ -1,24 +1,5 @@
 ---
 
-- name: Ensure docker, kubeadm and kubectl packages are installed
-  package:
-    name: '{{ item }}'
-    state: present
-  with_items:
-    - kubectl
-
-- name: make sure docker is running
-  service: 
-    name: docker 
-    enabled: yes
-    state: started
-
-- name: make sure kubelet is running
-  service: 
-    name: kubelet 
-    enabled: yes
-    state: started
-
 - name: Initialize the Kubernetes cluster using kubeadm
   command: kubeadm init --apiserver-advertise-address="192.168.100.10" --apiserver-cert-extra-sans="192.168.100.10"  --node-name k8s-master --pod-network-cidr=192.168.0.0/16
 
