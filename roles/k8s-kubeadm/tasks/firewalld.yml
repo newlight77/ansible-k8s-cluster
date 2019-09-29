@@ -4,7 +4,6 @@
 # Use "dmz" zone and add http/https.
 # Make dmz the default policy.
 
-
 - name: Enable firewalld
   service: 
     name: firewalld 
@@ -22,11 +21,6 @@
 
 - name: Allow http/https
   command: firewall-cmd --zone=dmz --permanent --add-service=http --add-service=https
-
-# - name: 4949 (munin-node) is open to monitor(s)
-#   when: install_muninnode|default(True)
-#   command: firewall-cmd --permanent --zone=dmz --add-rich-rule='rule family="ipv4" source address="{{ item }}/32" port port=4949 protocol="tcp" accept'
-#   with_items: "{{ muninnode_query_ips|default([]) }}"
 
 - name: setup firewall rules
   shell: firewall-cmd --permanent --add-port={{item}}
@@ -65,13 +59,6 @@
   become: yes
   with_items:
     - iptables-services
-
-# - name: enable iptables
-#   service: 
-#     name: iptables 
-#     enabled: true
-#     state: started
-#   become: yes
 
 - name: Bounce iptables
   service: 

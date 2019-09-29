@@ -1,0 +1,32 @@
+---
+
+- name: configure kubernetes repositories
+  template:
+    src: templates/kubernetes.repo.j2
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: 0440
+    force: yes
+
+- name: Ensure kubeadm packages are installed
+  package:
+    name: '{{ item }}'
+    state: present
+  become: yes
+  with_items:
+    - docker
+    - kubeadm
+    - kubelet
+
+- name: Enable and Start docker
+  service: 
+    name: docker 
+    enabled: yes
+    state: started
+
+- name: Enable and Start kubelet
+  service: 
+    name: kubelet 
+    enabled: yes
+    state: started
